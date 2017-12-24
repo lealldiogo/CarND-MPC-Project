@@ -25,6 +25,10 @@ cte[t] = f(x[t-1]) - y[t-1] + v[t-1] * sin(epsi[t-1]) * dt
 epsi[t] = psi[t] - psides[t-1] + v[t-1] * delta[t-1] / Lf * dt
 ```
 
+The future positions of the car are predicted as discrete points which are the fitted to a polynomial curve in order to form waypoints. In my project I used the `polyfit()` function adapted from [https://github.com/JuliaMath/Polynomials.jl/blob/master/src/Polynomials.jl#L676-L716](https://github.com/JuliaMath/Polynomials.jl/blob/master/src/Polynomials.jl#L676-L716).
+
+To take the latency into consideration, I just updated the state values as they were after the actuation was actually executed, I mean, after the latency had passed. This was done just before passing the state to the solver.
+
 I started out trying to adapt the code from the [mind the line quiz](https://github.com/udacity/CarND-MPC-Quizzes/tree/master/mpc_to_line) from the Model Predictive Control Lesson but didn't manage to run the simulation. So I checked the walkthrough video which gave nice insights and I was finally able to compile and run the simulation.
 
 But my car was driving of the road just after starting:

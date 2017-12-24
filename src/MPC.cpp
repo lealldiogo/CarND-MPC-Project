@@ -5,7 +5,6 @@
 
 using CppAD::AD;
 
-// TODO: Set the timestep length and duration
 size_t N = 15;
 double dt = 0.2;
 
@@ -23,7 +22,7 @@ const double Lf = 2.67;
 
 double ref_cte = 0;
 double ref_epsi = 0;
-double ref_v = 100;
+double ref_v = 50;
 
 size_t x_start = 0;
 size_t y_start = x_start + N;
@@ -42,7 +41,6 @@ class FG_eval {
 
   typedef CPPAD_TESTVECTOR(AD<double>) ADvector;
   void operator()(ADvector& fg, const ADvector& vars) {
-    // TODO: implement MPC
     // `fg` a vector of the cost constraints, `vars` is a vector of variable values (state & actuators)
     // NOTE: You'll probably go back and forth between this function and
     // the Solver function below.
@@ -51,14 +49,15 @@ class FG_eval {
 
     for (int i = 0; i < N; ++i)
     {
-      fg[0] += 2000*CppAD::pow(vars[cte_start + i] - ref_cte, 2);
+      fg[0] += 20*CppAD::pow(vars[cte_start + i] - ref_cte, 2);
       fg[0] += 2000*CppAD::pow(vars[epsi_start + i] - ref_epsi, 2);
-      fg[0] += CppAD::pow(vars[v_start + i] - ref_v, 2);
+      // convert velocity from mpdh to m/s
+      fg[0] += CppAD::pow(vars[v_start + i] - ref_v*0.46, 2);
     }
 
     for (int i = 0; i < N-1; ++i)
     {
-      fg[0] += 5*CppAD::pow(vars[delta_start + i], 2);
+      fg[0] += 100*CppAD::pow(vars[delta_start + i], 2);
       fg[0] += 5*CppAD::pow(vars[a_start + i], 2);
     }
 
@@ -75,19 +74,21 @@ class FG_eval {
     fg[1 + cte_start] = vars[cte_start];
     fg[1 + epsi_start] = vars[epsi_start];
 
-    for (int t = 1; t < N ; t++) {
-      // psi, v, delta at time t
-      AD<double> psi0 = vars[psi_start + t - 1];
-      AD<double> v0 = vars[v_start + t - 1];
-      AD<double> delta0 = vars[delta_start + t - 1];
+    // You were right!! Forgot to erase this part of the code
 
-      // psi at time t+1
-      AD<double> psi1 = vars[psi_start + t];
+    // for (int t = 1; t < N ; t++) {
+    //   // psi, v, delta at time t
+    //   AD<double> psi0 = vars[psi_start + t - 1];
+    //   AD<double> v0 = vars[v_start + t - 1];
+    //   AD<double> delta0 = vars[delta_start + t - 1];
 
-      // how psi changes
-      //change this to invert steering
-      fg[1 + psi_start + t] = psi1 - (psi0 - v0 * delta0 / Lf * dt);
-    }
+    //   // psi at time t+1
+    //   AD<double> psi1 = vars[psi_start + t];
+
+    //   // how psi changes
+    //   //change this to invert steering
+    //   fg[1 + psi_start + t] = psi1 - (psi0 - v0 * delta0 / Lf * dt);
+    // }
 
     for (int t = 0; t < N-1; t++) {
       // The state at time t+1 .
@@ -113,9 +114,6 @@ class FG_eval {
       AD<double> f0 = coeffs[0] + coeffs[1] * x0 + coeffs[2] * x0 * x0 + coeffs[3] * x0 * x0 * x0;
       AD<double> psides0 = CppAD::atan(coeffs[1] + coeffs[2] * x0 * 2 + coeffs[3] * x0 * x0 * 3);
 
-      // Here's `x` to get you started.
-      // The idea here is to constraint this value to be 0.
-      //
       // Recall the equations for the model:
       // x_[t] = x[t-1] + v[t-1] * cos(psi[t-1]) * dt
       // y_[t] = y[t-1] + v[t-1] * sin(psi[t-1]) * dt
@@ -147,7 +145,7 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
   size_t i;
   typedef CPPAD_TESTVECTOR(double) Dvector;
 
-  // TODO: Set the number of model variables (includes both states and inputs).
+  // Set the number of model variables (includes both states and inputs).
   // For example: If the state is a 4 element vector, the actuators is a 2
   // element vector and there are 10 timesteps. The number of variables is:
   // 4 * 10 + 2 * 9
@@ -161,7 +159,6 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
   double epsi = state[5];
 
   size_t n_vars = N * 6 + (N-1) * 2;
-  // TODO: Set the number of constraints
   size_t n_constraints = N * 6;
 
   // Initial value of the independent variables.
@@ -252,11 +249,8 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
   auto cost = solution.obj_value;
   std::cout << "Cost " << cost << std::endl;
 
-  // TODO: Return the first actuator values. The variables can be accessed with
+  // Return the first actuator values. The variables can be accessed with
   // `solution.x[i]`.
-  //
-  // {...} is shorthand for creating a vector, so auto x1 = {1.0,2.0}
-  // creates a 2 element double vector.
 
   vector<double> result;
 
