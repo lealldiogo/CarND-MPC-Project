@@ -6,8 +6,8 @@
 using CppAD::AD;
 
 // TODO: Set the timestep length and duration
-size_t N = 10;
-double dt = 0.1;
+size_t N = 15;
+double dt = 0.2;
 
 // This value assumes the model presented in the classroom is used.
 //
@@ -53,8 +53,7 @@ class FG_eval {
     {
       fg[0] += 2000*CppAD::pow(vars[cte_start + i] - ref_cte, 2);
       fg[0] += 2000*CppAD::pow(vars[epsi_start + i] - ref_epsi, 2);
-      // convert speed from mph to m/s
-      fg[0] += CppAD::pow(vars[v_start + i] - ref_v * 0.46, 2);
+      fg[0] += CppAD::pow(vars[v_start + i] - ref_v, 2);
     }
 
     for (int i = 0; i < N-1; ++i)
@@ -130,7 +129,8 @@ class FG_eval {
       fg[2 + psi_start + t] = psi1 - (psi0 - v0 * delta0 / Lf * dt);
       fg[2 + v_start + t] = v1 - (v0 + a0 * dt);
       fg[2 + cte_start + t] = cte1 - ((f0 - y0) + (v0 * CppAD::sin(epsi0) * dt));
-      fg[2 + epsi_start + t] = epsi1 - ((psi0 - psides0) + v0 * delta0 / Lf * dt);
+      //change this to invert steering
+      fg[2 + epsi_start + t] = epsi1 - ((psi0 - psides0) - v0 * delta0 / Lf * dt);
     }
 
   }
