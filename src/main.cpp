@@ -92,7 +92,7 @@ int main() {
           double psi = j[1]["psi"];
           double v = j[1]["speed"];
           // convert velocity from mph to m/s
-          v = v*0.46;
+          v = v*0.44704;
 
           //coordinate transformation
           for (int i = 0; i < ptsx.size(); ++i)
@@ -123,10 +123,16 @@ int main() {
 
           // Take latency into consideration
           double latency = 0.1;
-          px = v*cos(psi)*latency;
-          py = v*sin(psi)*latency;
-          psi = - v*steer_value*latency/Lf;
+          // In vehicle coordinates psi=0
+          px = v*latency;
+          py = 0;
+          psi = 0; // - v*steer_value*latency/Lf;
+
+          // updating cte before speed and epsi to use old values of each
+          cte = v*sin(epsi)*latency;
           v = v + throttle_value*latency;
+          // inverting the steering angle for epsi here
+          epsi = epsi - v*steer_value*latency/Lf;
 
           Eigen::VectorXd state(6);
           state << px, py, psi, v, cte, epsi;
